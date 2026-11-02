@@ -30,7 +30,7 @@ export interface QRCodeInput {
   destination?: string;
 }
 
-const QR_CODE_METAOBJECT_TYPE = "app/qrcode";
+const QR_CODE_METAOBJECT_TYPE = "app_qrcode";
 
 //Slugify text for handle
 function slugify(text: string) {
@@ -91,7 +91,7 @@ export async function getQRCode(handle: string, graphql: any, shop: string): Pro
   const response = await graphql(
     `#graphql
       query getQRCode($handle: MetaobjectHandleInput!) {
-        metaobject(handle: $handle) {
+        metaobjectByHandle(handle: $handle) {
           id
           handle
           fields {
@@ -119,7 +119,7 @@ export async function getQRCode(handle: string, graphql: any, shop: string): Pro
   );
 
   const { data } = await response.json();
-  const metaobject = data.metaobject;
+  const metaobject = data.metaobjectByHandle;
 
   if (!metaobject) {
     throw new Error("QR Code not found");
@@ -369,10 +369,14 @@ export async function incrementQRCodeScans(
     throw new Error("QR Code not found");
   }
 
+  if (!qrCode.handle) {
+    throw new Error("QR Code handle is missing");
+  }
+
   const response = await admin.graphql(
     `#graphql
-      mutation updateQRCode($metaobject: MetaobjectUpdateInput!) {
-        metaobjectUpdate(metaobject: $metaobject) {
+      mutation upsertQRCode($handle: MetaobjectHandleInput!, $metaobject: MetaobjectUpsertInput!) {
+        metaobjectUpsert(handle: $handle, metaobject: $metaobject) {
           metaobject {
             id
           }
@@ -385,8 +389,8 @@ export async function incrementQRCodeScans(
     `,
     {
       variables: {
+        handle: { type: QR_CODE_METAOBJECT_TYPE, handle: qrCode.handle },
         metaobject: {
-          id,
           fields: [{ key: "scans", value: String((qrCode.scans || 0) + 1) }],
         },
       },
@@ -395,7 +399,7 @@ export async function incrementQRCodeScans(
 
   const data = await response.json();
 
-  if (data.data.metaobjectUpdate.userErrors.length > 0) {
-    throw new Error(data.data.metaobjectUpdate.userErrors[0].message);
+  if (data.data.metaobjectUpsert.userErrors.length > 0) {
+    throw new Error(data.data.metaobjectUpsert.userErrors[0].message);
   }
 }

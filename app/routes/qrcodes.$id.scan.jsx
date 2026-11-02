@@ -38,7 +38,7 @@ export const loader = async ({ request, params }) => {
     `,
     {
       variables: {
-        handle: { type: "$app:qrcode", handle: params.id },
+        handle: { type: "app_qrcode", handle: params.id },
       },
     },
   );
@@ -48,7 +48,7 @@ export const loader = async ({ request, params }) => {
   invariant(metaobject, "Could not find QR code destination");
 
   const currentScans = metaobject.scans?.jsonValue ?? 0;
-  await incrementQRCodeScans(metaobject.id, currentScans, admin.graphql);
+  await incrementQRCodeScans(admin, metaobject.id, shop);
 
   const qrCode = {
     destination: metaobject.destination?.jsonValue,

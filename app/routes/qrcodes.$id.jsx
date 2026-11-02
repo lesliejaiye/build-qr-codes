@@ -23,7 +23,7 @@ export const loader = async ({ request, params }) => {
     `,
     {
       variables: {
-        handle: { type: "$app:qrcode", handle: params.id },
+        handle: { type: "app_qrcode", handle: params.id },
       },
     },
   );
