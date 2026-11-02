@@ -8,12 +8,16 @@ import { useFetcher } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { boundary } from "@shopify/shopify-app-react-router/server";
+import { getQRCodes } from "../models/QRCode.server";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { admin, session } = await authenticate.admin(request);
+  const qrCodes = await getQRCodes(admin, session.shop);
 
-  return null;
-};
+  return {
+    qrCodes,
+  };
+}
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { admin } = await authenticate.admin(request);
